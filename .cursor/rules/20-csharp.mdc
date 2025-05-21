@@ -1,0 +1,34 @@
+---
+description: Guidelines to watch out for when writing C# code
+globs: 
+alwaysApply: false
+---
+```yaml
+- name: C#コードの記述
+  steps:
+    - name: 既存コード調査
+      instruction: プロジェクト内の既存ソースコードを調査し、同様の書き方を採用する
+    - name: namespace宣言をファイルスコープに設定
+      instruction: `namespace Foo;` 形式のファイルスコープ namespace を記述する
+    - name: 中括弧を必須にする
+      instruction: `if (exp) { … }` や `for (…) { … }` など、制御構文の中括弧は必ず省略せず記述する
+    - name: インスタンス参照に this を付与
+      instruction: インスタンスメンバーを参照する際は `this._member` のように必ず `this.` を付ける
+    - name: var キーワードを利用
+      instruction: ローカル変数宣言では `for (var i = 0; …)` のように型推論 `var` を使用する
+    - name: 言語型と CLR 型の使い分け
+      instruction: `string str;` のような宣言するときは言語型を使うが、静的メンバーを参照するるときだけ `int.Parse()` ではなく `Int32.Parse()` のように CLR 型（`Int32`, `Boolean`, `String` など）を使う
+    - name: ThrowIf メソッド群を利用
+      instruction: `ArgumentException.ThrowIfNullOrEmpty(str, nameof(str));` のような ThrowIf メソッド群は積極的に使用する
+  note: >
+    このセクションは C# コードの記述に関するものです。
+    cs ファイルや Razor ファイルはもちろん、
+    Markdown ファイルにサンプルコードを記述する際にも遵守してください。
+
+- name: テストの実行
+  steps:
+    - name: dotnet test の対象を指定
+      instruction: `dotnet test MySlution.sln` とテスト対象の祖ルーションを指定します
+
+```
+

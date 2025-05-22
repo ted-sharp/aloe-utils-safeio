@@ -1,8 +1,8 @@
-using System;
+// <copyright file="SafeDirectory.cs" company="ted-sharp">
+// Copyright (c) ted-sharp. All rights reserved.
+// </copyright>
+
 using System.Diagnostics;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Aloe.Utils.SafeIO;
 
@@ -17,23 +17,38 @@ public static class SafeDirectory
     /// <param name="path">削除するディレクトリのパス</param>
     /// <param name="timeout">削除完了を待機する最大時間</param>
     /// <param name="retryInterval">再試行間隔</param>
-    /// <exception cref="ArgumentException">timeoutがretryIntervalより短い場合にスローされます</exception>
+    /// <exception cref="ArgumentOutOfRangeException">timeoutがretryIntervalより短い場合にスローされます</exception>
     /// <exception cref="TimeoutException">タイムアウト時にスローされます</exception>
     public static void Delete(string path, TimeSpan timeout, TimeSpan retryInterval)
     {
+        // timeout < retryInterval の検証
         ArgumentOutOfRangeException.ThrowIfLessThan(timeout, retryInterval, nameof(timeout));
 
-        // 削除リクエスト（再帰的に全内容を削除）
-        Directory.Delete(path, recursive: true);
-
         var sw = Stopwatch.StartNew();
+
+        // ディレクトリが消えるまで、あるいはタイムアウトするまで繰り返し
         while (Directory.Exists(path))
         {
-            if (sw.Elapsed > timeout)
+            try
+            {
+                // 再帰削除を試みる
+                Directory.Delete(path, recursive: true);
+            }
+            catch (IOException)
+            {
+                // ファイルロック等の例外は無視して再試行
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // アクセス拒否も一旦無視して再試行
+            }
+
+            if (sw.Elapsed >= timeout)
             {
                 throw new TimeoutException(
-                    $"[{nameof(SafeDirectory)}] ディレクトリ「{path}」の削除完了待機がタイムアウトしました（{timeout}）。");
+                    $"[{nameof(SafeDirectory)}] ディレクトリ「{path}」の削除待機がタイムアウトしました（{timeout}）。");
             }
+
             Thread.Sleep(retryInterval);
         }
     }
@@ -45,7 +60,8 @@ public static class SafeDirectory
     /// <param name="timeout">削除完了を待機する最大時間</param>
     /// <param name="retryInterval">再試行間隔</param>
     /// <param name="ct">キャンセル用トークン</param>
-    /// <exception cref="ArgumentException">timeoutがretryIntervalより短い場合にスローされます</exception>
+    /// <returns>削除操作が完了したことを示すTask</returns>
+    /// <exception cref="ArgumentException">timeout が retryInterval より短い場合にスローされます</exception>
     /// <exception cref="TimeoutException">タイムアウト時にスローされます</exception>
     public static async Task DeleteAsync(
         string path,
@@ -53,27 +69,49 @@ public static class SafeDirectory
         TimeSpan retryInterval,
         CancellationToken ct = default)
     {
+        // バリデーション
         ArgumentOutOfRangeException.ThrowIfLessThan(timeout, retryInterval, nameof(timeout));
 
-        Directory.Delete(path, recursive: true);
-
         var sw = Stopwatch.StartNew();
+
         using var timer = new PeriodicTimer(retryInterval);
 
+        // ディレクトリが消えるまでループ
         while (Directory.Exists(path))
         {
             ct.ThrowIfCancellationRequested();
 
-            if (sw.Elapsed > timeout)
+            try
+            {
+                // 再帰的削除を試み
+                Directory.Delete(path, recursive: true);
+            }
+            catch (IOException)
+            {
+                // ファイルロック等で失敗したら無視して再試行
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // アクセス拒否も無視
+            }
+
+            // 削除に成功してパスがなくなったら終了
+            if (!Directory.Exists(path))
+            {
+                return;
+            }
+
+            // タイムアウトチェック
+            if (sw.Elapsed >= timeout)
             {
                 throw new TimeoutException(
                     $"[{nameof(SafeDirectory)}] ディレクトリ「{path}」の削除完了待機がタイムアウトしました（{timeout}）。");
             }
 
-            // 次のタイマーまで待機
+            // 次のリトライまで待機
             if (!await timer.WaitForNextTickAsync(ct))
             {
-                throw new OperationCanceledException("タイマー待機中にキャンセルされました。");
+                throw new OperationCanceledException("タイマー待機中にキャンセルされました。", ct);
             }
         }
     }

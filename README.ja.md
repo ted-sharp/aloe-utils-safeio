@@ -1,5 +1,8 @@
 # Aloe.Utils.SafeIO
 
+[![English](https://img.shields.io/badge/Language-English-blue)](./README.md)
+[![日本語](https://img.shields.io/badge/言語-日本語-blue)](./README.ja.md)
+
 [![NuGet Version](https://img.shields.io/nuget/v/Aloe.Utils.SafeIO.svg)](https://www.nuget.org/packages/Aloe.Utils.SafeIO)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/Aloe.Utils.SafeIO.svg)](https://www.nuget.org/packages/Aloe.Utils.SafeIO)
 [![License](https://img.shields.io/github/license/ted-sharp/aloe-utils-safeio.svg)](LICENSE)

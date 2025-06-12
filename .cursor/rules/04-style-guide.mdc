@@ -1,0 +1,111 @@
+---
+description: コーディングスタイルの統一ガイド。命名規則、フォーマット、コメントの書き方を定義。一貫性のある可読性の高いコードを維持するための基準を提供。
+globs: 
+alwaysApply: false
+---
+# ルールの目的
+このルールは、コードの一貫性と可読性を確保し、チーム全体で統一されたコーディングスタイルを維持することを目的としています。
+
+# 具体的な要件
+
+## 1. 命名規則
+- 条件: すべてのコード要素
+- アクション: 
+  - クラス名: PascalCase
+  - メソッド名: PascalCase
+  - 変数名: camelCase
+  - 定数: UPPER_CASE
+  - インターフェース: Iプレフィックス
+- 期待される結果: 一貫性のある命名
+
+## 2. コードフォーマット
+- 条件: すべてのコード
+- アクション: 
+  - インデント: 4スペース
+  - 行の長さ: 120文字以内
+  - 空行の適切な使用
+  - 中括弧の配置
+- 期待される結果: 読みやすいコード
+
+## 3. コメント
+- 条件: 複雑なロジックや公開API
+- アクション: 
+  - XMLドキュメントコメント
+  - 目的の説明
+  - パラメータの説明
+  - 戻り値の説明
+- 期待される結果: 理解しやすいコード
+
+# ルールの検証
+- [ ] 命名規則が守られているか
+- [ ] コードフォーマットが統一されているか
+- [ ] コメントが適切に書かれているか
+- [ ] コードの可読性が確保されているか
+
+# ルール違反時の対応
+1. 命名規則違反
+   - リファクタリング
+   - 命名の修正
+   - チーム内での確認
+
+2. フォーマット違反
+   - コードフォーマッターの実行
+   - 手動での修正
+   - 設定の確認
+
+# 適用例
+
+## 良い例
+```csharp
+/// <summary>
+/// ユーザー情報を取得します。
+/// </summary>
+/// <param name="userId">ユーザーID</param>
+/// <returns>ユーザー情報</returns>
+public async Task<UserInfo> GetUserInfoAsync(string userId)
+{
+    const int MAX_RETRY_COUNT = 3;
+    var userRepository = new UserRepository();
+    
+    try
+    {
+        return await userRepository.FindByIdAsync(userId);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "ユーザー情報の取得に失敗しました");
+        throw;
+    }
+}
+```
+
+## 悪い例
+```csharp
+public async Task<userinfo> getuserinfo(string userid)
+{
+    var repo = new userrepo();
+    try {
+        return await repo.findbyid(userid);
+    } catch (Exception e) {
+        Console.WriteLine(e);
+        throw;
+    }
+}
+```
+
+# ベストプラクティス
+- 自動フォーマッターの活用
+- コードレビューでの確認
+- 定期的なスタイルガイドの見直し
+- チーム内での合意形成
+- ツールによる自動チェック
+
+# 依存ルール
+- 01-documentation.mdc: ドキュメンテーションのルール
+- 02-implementation.mdc: 実装のルール
+- 03-code-review.mdc: コードレビューのルール
+
+# 関連ルール
+- なし
+
+

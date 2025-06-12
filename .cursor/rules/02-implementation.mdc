@@ -1,0 +1,116 @@
+---
+description: コード実装の標準ルール。アーキテクチャパターン、エラーハンドリング、ロギング、パフォーマンス最適化の実装方法を定義。保守性と拡張性を重視した実装を促進。
+globs: 
+alwaysApply: false
+---
+# ルールの目的
+このルールは、プロジェクト全体での一貫性のある実装を確保し、保守性と可読性の高いコードを維持することを目的としています。
+
+# 具体的な要件
+
+## 1. コードの構造
+- 条件: 新しいクラスやコンポーネントを作成する場合
+- アクション: 
+  - 適切な名前空間の使用
+  - クラス/コンポーネントの責務を明確に定義
+  - インターフェースの適切な使用
+- 期待される結果: 明確な構造と責務を持つコード
+
+## 2. パターンの適用
+- 条件: 機能を実装する場合
+- アクション: 
+  - MVVMパターンの遵守
+  - 依存性注入の適切な使用
+  - イベント処理の標準化
+- 期待される結果: 一貫性のある実装パターン
+
+## 3. エラー処理
+- 条件: 例外処理を実装する場合
+- アクション: 
+  - 適切な例外タイプの使用
+  - エラーメッセージの明確化
+  - ログ記録の実装
+- 期待される結果: 堅牢なエラー処理
+
+# ルールの検証
+- [ ] コードの構造が適切か
+- [ ] パターンが一貫して適用されているか
+- [ ] エラー処理が適切に実装されているか
+- [ ] 命名規則が遵守されているか
+
+# ルール違反時の対応
+1. 構造が不適切な場合
+   - クラス/コンポーネントの責務を再検討
+   - インターフェースの導入を検討
+   - コードの再構成を実施
+
+2. パターンが不適切な場合
+   - 既存のパターンを確認
+   - 必要に応じてパターンの適用を修正
+   - チームでのレビューを実施
+
+# 適用例
+
+## 良い例
+```csharp
+public class UserService : IUserService
+{
+    private readonly ILogger<UserService> _logger;
+    private readonly IUserRepository _userRepository;
+
+    public UserService(
+        ILogger<UserService> logger,
+        IUserRepository userRepository)
+    {
+        _logger = logger;
+        _userRepository = userRepository;
+    }
+
+    public async Task<User> GetUserAsync(int userId)
+    {
+        try
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+            {
+                _logger.LogWarning("User not found: {UserId}", userId);
+                throw new NotFoundException($"User not found: {userId}");
+            }
+            return user;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user: {UserId}", userId);
+            throw;
+        }
+    }
+}
+```
+
+## 悪い例
+```csharp
+public class UserService
+{
+    public User GetUser(int id)
+    {
+        var user = new UserRepository().GetById(id);
+        return user;
+    }
+}
+```
+
+# ベストプラクティス
+- 依存性注入を活用
+- 非同期処理の適切な使用
+- ログ記録の徹底
+- 単体テストの作成
+- コードの再利用性を考慮
+
+# 依存ルール
+- 01-documentation.mdc: ドキュメンテーションのルール
+
+# 関連ルール
+- 03-code-review.mdc: コードレビューのガイドライン
+- 04-style-guide.mdc: コーディングスタイルガイド
+
+

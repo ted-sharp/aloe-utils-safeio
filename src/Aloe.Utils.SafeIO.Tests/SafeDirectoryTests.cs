@@ -114,4 +114,58 @@ public class SafeDirectoryTests
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
             SafeDirectory.DeleteAsync(this._testDirectoryPath, timeout, retryInterval));
     }
+
+    [Fact(DisplayName = "ディレクトリの安全コピー（同期）が正常に完了すること")]
+    public void Copy_ShouldCopyDirectoryRecursively_Sync()
+    {
+        using var src = new TempDir();
+        using var dst = new TempDir();
+
+        var srcRoot = src.Path;
+        var dstRoot = Path.Combine(dst.Path, "out");
+
+        Directory.CreateDirectory(Path.Combine(srcRoot, "a", "b"));
+        File.WriteAllText(Path.Combine(srcRoot, "a", "b", "file.txt"), "content");
+
+        SafeDirectory.Copy(srcRoot, dstRoot, overwrite: true, timeout: TimeSpan.FromSeconds(5), retryInterval: TimeSpan.FromMilliseconds(50));
+
+        Assert.True(Directory.Exists(Path.Combine(dstRoot, "a", "b")));
+        Assert.True(File.Exists(Path.Combine(dstRoot, "a", "b", "file.txt")));
+        Assert.Equal("content", File.ReadAllText(Path.Combine(dstRoot, "a", "b", "file.txt")));
+    }
+
+    [Fact(DisplayName = "ディレクトリの安全コピー（非同期）が正常に完了すること")]
+    public async Task CopyAsync_ShouldCopyDirectoryRecursively_Async()
+    {
+        using var src = new TempDir();
+        using var dst = new TempDir();
+
+        var srcRoot = src.Path;
+        var dstRoot = Path.Combine(dst.Path, "out");
+
+        Directory.CreateDirectory(Path.Combine(srcRoot, "a", "b"));
+        File.WriteAllText(Path.Combine(srcRoot, "a", "b", "file.txt"), "content");
+
+        await SafeDirectory.CopyAsync(srcRoot, dstRoot, overwrite: true, timeout: TimeSpan.FromSeconds(5), retryInterval: TimeSpan.FromMilliseconds(50));
+
+        Assert.True(Directory.Exists(Path.Combine(dstRoot, "a", "b")));
+        Assert.True(File.Exists(Path.Combine(dstRoot, "a", "b", "file.txt")));
+        Assert.Equal("content", await File.ReadAllTextAsync(Path.Combine(dstRoot, "a", "b", "file.txt")));
+    }
+
+    private sealed class TempDir : IDisposable
+    {
+        public string Path { get; }
+
+        public TempDir()
+        {
+            this.Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"SafeDirectoryTest_{Guid.NewGuid()}");
+            Directory.CreateDirectory(this.Path);
+        }
+
+        public void Dispose()
+        {
+            try { Directory.Delete(this.Path, recursive: true); } catch { }
+        }
+    }
 }
